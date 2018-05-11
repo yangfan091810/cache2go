@@ -1,4 +1,4 @@
-# cache2go
+# cache2go 源码学习
 ## cache2go目录文件主要功能：
 cache.go 主函数，创建缓存表<br>
 cacheitem.go 缓存记录操作<br>
