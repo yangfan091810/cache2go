@@ -5,7 +5,7 @@ import (
 )
 
 var (
-    cache := make(map[string]*CacheTable)
+    cache = make(map[string]*CacheTable)
     mutex sync.RWMutex
 )
 /*
@@ -30,4 +30,5 @@ func Cache(table string) *CacheTable {
         }
         mutex.Unlock()
     }
+    return t
 }

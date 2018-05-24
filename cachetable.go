@@ -15,9 +15,9 @@ type CacheTable struct {
     //所有缓存记录
     items map[interface{}]*CacheItem
     // 触发缓存清理的定时器
-    clearupTimer time.Timer
+    cleanupTimer *time.Timer
     // 缓存清理周期
-    clearupInterval time.Duration
+    cleanupInterval time.Duration
     //缓存表日志
     logger *log.Logger
     //访问不存在的key时的回调函数
@@ -77,11 +77,11 @@ func (table *CacheTable) SetLogger(logger *log.Logger) {
 //可以看到其实质就是自调节下一次启动缓存更新的时间。另外我们也注意到，如果lifeSpan设置为0的话，就不会被淘汰，即永久有效
 func (table *CacheTable) expirationCheck() {
     table.Lock()
-    if table.clearupTimer != nil {
-        table.clearupTimer.Stop()
+    if table.cleanupTimer != nil {
+        table.cleanupTimer.Stop()
     }
     //检查清理缓存周期是否大于0，
-    if table.clearupInterval > 0 {
+    if table.cleanupInterval > 0 {
         table.log("Expiration check triggered after", table.cleanupInterval, "for table", table.name)
     } else {
         table.log("Expiration check installed for table", table.name)
@@ -95,7 +95,7 @@ func (table *CacheTable) expirationCheck() {
         item.RLock()
         lifeSpan := item.lifeSpan
         accessedOn := item.accessedOn
-        item.RUlock()
+        item.RUnlock()
         //如果缓存记录的 lifeSpan 设置为0，则永久不过期
         if lifeSpan == 0 {
             continue
@@ -110,9 +110,9 @@ func (table *CacheTable) expirationCheck() {
         }
     }
     //更新缓存表的过期周期检查时间
-    table.clearupInterval = smallestDuration
+    table.cleanupInterval = smallestDuration
     if smallestDuration > 0 { //smallestDuration 时长后开启单独的goroutine执行缓存过期检查
-        table.clearupTimer = time.AfterFunc(smallestDuration, func() {
+        table.cleanupTimer = time.AfterFunc(smallestDuration, func() {
             go table.expirationCheck()
         })
     }
